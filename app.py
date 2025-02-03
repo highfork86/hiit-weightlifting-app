@@ -113,7 +113,7 @@ if st.session_state.timer_running:
     while st.session_state.time_left > 0:
         time.sleep(1)
         st.session_state.time_left -= 1
-        st.experimental_rerun()
+        st.rerun()
     stop_timer()
 
 st.write(f"Time Left: {st.session_state.time_left} sec")
