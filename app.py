@@ -108,17 +108,19 @@ with col3:
     if st.button("Reset"):
         reset_timer()
 
-# Countdown Timer Logic with Live Display
+# Live Countdown Timer Display
+timer_display = st.empty()  # This creates a space where the countdown will update
+
 if st.session_state.timer_running:
-    while st.session_state.time_left > 0:
-        time.sleep(1)
-        st.session_state.time_left -= 1
-        st.rerun()
+    for i in range(st.session_state.time_left, -1, -1):
+        st.session_state.time_left = i
+        timer_display.write(f"⏳ **Time Left: {i} sec**")  # Update the displayed countdown
+        time.sleep(1)  # Wait for 1 second before updating
+    stop_timer()  # Stop timer when countdown finishes
 
-    stop_timer()
-
-# Show the countdown timer on the app screen
-st.write(f"⏳ **Time Left:** {st.session_state.time_left} sec")
+# Display Final Countdown Value (if timer is stopped)
+if not st.session_state.timer_running:
+    timer_display.write(f"⏳ **Time Left: {st.session_state.time_left} sec**")
 
 # Progress Tracking
 st.subheader("Workout Completion")
