@@ -108,15 +108,17 @@ with col3:
     if st.button("Reset"):
         reset_timer()
 
-# Countdown Timer Logic
+# Countdown Timer Logic with Live Display
 if st.session_state.timer_running:
     while st.session_state.time_left > 0:
         time.sleep(1)
         st.session_state.time_left -= 1
         st.rerun()
+
     stop_timer()
 
-st.write(f"Time Left: {st.session_state.time_left} sec")
+# Show the countdown timer on the app screen
+st.write(f"⏳ **Time Left:** {st.session_state.time_left} sec")
 
 # Progress Tracking
 st.subheader("Workout Completion")
