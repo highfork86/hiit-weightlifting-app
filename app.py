@@ -1,23 +1,34 @@
 import streamlit as st
 import time
 
-# Initialize session state for timer
+# Initialize session state variables
 if 'timer_running' not in st.session_state:
     st.session_state.timer_running = False
     st.session_state.time_left = 40  # Default work time
+if 'rest_timer_running' not in st.session_state:
+    st.session_state.rest_timer_running = False
+    st.session_state.rest_time_left = 40  # Default rest time
+if 'set_count' not in st.session_state:
+    st.session_state.set_count = 0  # Track number of sets completed
 
-# Function to start timer
+# Function to start the workout timer
 def start_timer():
     st.session_state.timer_running = True
+    st.session_state.rest_timer_running = False  # Stop rest timer when workout starts
 
-# Function to stop timer
+# Function to stop the workout timer and start rest time
 def stop_timer():
     st.session_state.timer_running = False
+    st.session_state.rest_timer_running = True
+    st.session_state.set_count += 1  # Increase set count after each stop
 
-# Function to reset timer
+# Function to reset everything
 def reset_timer():
     st.session_state.timer_running = False
+    st.session_state.rest_timer_running = False
     st.session_state.time_left = 40
+    st.session_state.rest_time_left = 40
+    st.session_state.set_count = 0  # Reset set count
 
 # Define workout routines
 workouts = {
@@ -95,7 +106,10 @@ st.subheader("Weightlifting Routine:")
 for exercise in workouts[day]["Strength"]:
     st.write(f"- {exercise}")
 
-# HIIT Timer
+# Display set count
+st.subheader(f"✅ Sets Completed: {st.session_state.set_count}")
+
+# HIIT Timer Controls
 st.subheader("HIIT Timer")
 col1, col2, col3 = st.columns(3)
 with col1:
@@ -109,22 +123,40 @@ with col3:
         reset_timer()
 
 # Live Countdown Timer Display
-timer_display = st.empty()  # This creates a space where the countdown will update
+timer_display = st.empty()
 
 if st.session_state.timer_running:
     for i in range(st.session_state.time_left, -1, -1):
         st.session_state.time_left = i
-        timer_display.write(f"⏳ **Time Left: {i} sec**")  # Update the displayed countdown
-        time.sleep(1)  # Wait for 1 second before updating
-    stop_timer()  # Stop timer when countdown finishes
+        timer_display.write(f"⏳ **Workout Time Left: {i} sec**")  # Update the countdown
+        time.sleep(1)
+    stop_timer()
 
-# Display Final Countdown Value (if timer is stopped)
+# Rest Timer Display and Sound Alert
+rest_timer_display = st.empty()
+
+if st.session_state.rest_timer_running:
+    for i in range(st.session_state.rest_time_left, -1, -1):
+        st.session_state.rest_time_left = i
+        rest_timer_display.write(f"🛑 **Rest Time Left: {i} sec**")
+        time.sleep(1)
+
+        # Play an alert sound when rest time reaches 0
+        if i == 0:
+            st.markdown('<audio autoplay><source src="https://www.soundjay.com/button/beep-07.wav" type="audio/wav"></audio>', unsafe_allow_html=True)
+
+    st.session_state.rest_timer_running = False  # Stop the rest timer
+
+# Display Final Countdown Values (if timer is stopped)
 if not st.session_state.timer_running:
-    timer_display.write(f"⏳ **Time Left: {st.session_state.time_left} sec**")
+    timer_display.write(f"⏳ **Workout Time Left: {st.session_state.time_left} sec**")
+
+if not st.session_state.rest_timer_running:
+    rest_timer_display.write(f"🛑 **Rest Time Left: {st.session_state.rest_time_left} sec**")
 
 # Progress Tracking
 st.subheader("Workout Completion")
 for exercise in workouts[day]["Strength"]:
     st.checkbox(f"Completed: {exercise}")
 
-st.success("Workout Tracker Ready! Try it out.")
+st.success("Workout Tracker Updated! 🎯 Try it out.")
