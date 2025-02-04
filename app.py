@@ -4,7 +4,7 @@ import time
 # Initialize session state variables
 if 'timer_running' not in st.session_state:
     st.session_state.timer_running = False
-    st.session_state.time_left = 40  # Default work time
+    st.session_state.time_left = 40  # Default workout time
 if 'cooldown_running' not in st.session_state:
     st.session_state.cooldown_running = False
     st.session_state.cooldown_time_left = 20  # Default cooldown time
@@ -24,15 +24,12 @@ def stop_timer():
     st.session_state.set_count += 1  # Increase set count after each stop
 
 # Function to reset everything
-
-# Function to reset everything (But Keep Sets Completed Persistent)
 def reset_timer():
     st.session_state.timer_running = False
     st.session_state.cooldown_running = False
     st.session_state.time_left = 40
     st.session_state.cooldown_time_left = 20
-    # Do NOT reset set count here to keep it persistent
-
+    # Keep set count persistent (do not reset)
 
 # Define workout routines
 workouts = {
@@ -126,16 +123,9 @@ with col3:
     if st.button("Reset"):
         reset_timer()
 
-# Live Countdown Timer Display
+# Live Countdown Timer Display and Progress Bar
 timer_display = st.empty()
-
-if st.session_state.timer_running:
-    for i in range(st.session_state.time_left, -1, -1):
-        st.session_state.time_left = i
-        timer_display.write(f"⏳ **Workout Time Left: {i} sec**")  # Update the countdown
-# ✅ FIX: Scale progress to 0-1 instead of 0-100
-        progress = max(0.0, min(i / 40, 1.0))  # Scale progress to 0-1 for Streamlit
-        progress_bar = st.empty()  # Create a placeholder for the progress bar
+progress_bar = st.progress(1.0)  # Initialize at full green (100%)
 
 if st.session_state.timer_running:
     for i in range(st.session_state.time_left, -1, -1):
@@ -144,13 +134,12 @@ if st.session_state.timer_running:
         
         # ✅ FIX: Ensure only one progress bar updates
         progress = max(0.0, min(i / 40, 1.0))
-        progress_bar.progress(progress)
+        progress_bar.progress(progress)  # Shrinking green bar
         
         time.sleep(1)
     stop_timer()
 else:
-    progress_bar.empty()  # Clear progress bar when timer stops
-   
+    progress_bar.progress(0)  # Clear progress bar when timer stops
 
 # Cooldown Timer Display and Red Alert
 cooldown_display = st.empty()
