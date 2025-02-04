@@ -24,12 +24,15 @@ def stop_timer():
     st.session_state.set_count += 1  # Increase set count after each stop
 
 # Function to reset everything
+
+# Function to reset everything (But Keep Sets Completed Persistent)
 def reset_timer():
     st.session_state.timer_running = False
     st.session_state.cooldown_running = False
     st.session_state.time_left = 40
     st.session_state.cooldown_time_left = 20
-    st.session_state.set_count = 0  # Reset set count
+    # Do NOT reset set count here to keep it persistent
+
 
 # Define workout routines
 workouts = {
@@ -132,9 +135,22 @@ if st.session_state.timer_running:
         timer_display.write(f"⏳ **Workout Time Left: {i} sec**")  # Update the countdown
 # ✅ FIX: Scale progress to 0-1 instead of 0-100
         progress = max(0.0, min(i / 40, 1.0))  # Scale progress to 0-1 for Streamlit
-        st.progress(progress)  # Show shrinking green bar
+        progress_bar = st.empty()  # Create a placeholder for the progress bar
+
+if st.session_state.timer_running:
+    for i in range(st.session_state.time_left, -1, -1):
+        st.session_state.time_left = i
+        timer_display.write(f"⏳ **Workout Time Left: {i} sec**")  # Update countdown
+        
+        # ✅ FIX: Ensure only one progress bar updates
+        progress = max(0.0, min(i / 40, 1.0))
+        progress_bar.progress(progress)
+        
         time.sleep(1)
     stop_timer()
+else:
+    progress_bar.empty()  # Clear progress bar when timer stops
+   
 
 # Cooldown Timer Display and Red Alert
 cooldown_display = st.empty()
