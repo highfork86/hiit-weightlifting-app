@@ -130,7 +130,8 @@ if st.session_state.timer_running:
     for i in range(st.session_state.time_left, -1, -1):
         st.session_state.time_left = i
         timer_display.write(f"⏳ **Workout Time Left: {i} sec**")  # Update the countdown
-        progress = max(0, min((i / 40) * 100, 100))  # Ensure value stays between 0-100
+# ✅ FIX: Scale progress to 0-1 instead of 0-100
+        progress = max(0.0, min(i / 40, 1.0))  # Scale progress to 0-1 for Streamlit
         st.progress(progress)  # Show shrinking green bar
         time.sleep(1)
     stop_timer()
