@@ -130,7 +130,7 @@ if st.session_state.timer_running:
     for i in range(st.session_state.time_left, -1, -1):
         st.session_state.time_left = i
         timer_display.write(f"⏳ **Workout Time Left: {i} sec**")  # Update the countdown
-        progress = (i / 40) * 100  # Calculate progress for the green bar
+        progress = max(0, min((i / 40) * 100, 100))  # Ensure value stays between 0-100
         st.progress(progress)  # Show shrinking green bar
         time.sleep(1)
     stop_timer()
