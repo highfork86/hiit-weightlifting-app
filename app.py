@@ -5,29 +5,30 @@ import time
 if 'timer_running' not in st.session_state:
     st.session_state.timer_running = False
     st.session_state.time_left = 40  # Default work time
-if 'rest_timer_running' not in st.session_state:
-    st.session_state.rest_timer_running = False
-    st.session_state.rest_time_left = 40  # Default rest time
+if 'cooldown_running' not in st.session_state:
+    st.session_state.cooldown_running = False
+    st.session_state.cooldown_time_left = 20  # Default cooldown time
 if 'set_count' not in st.session_state:
     st.session_state.set_count = 0  # Track number of sets completed
 
 # Function to start the workout timer
 def start_timer():
     st.session_state.timer_running = True
-    st.session_state.rest_timer_running = False  # Stop rest timer when workout starts
+    st.session_state.cooldown_running = False  # Stop cooldown when workout starts
+    st.session_state.cooldown_time_left = 20  # Reset cooldown time
 
-# Function to stop the workout timer and start rest time
+# Function to stop the workout timer and start cooldown
 def stop_timer():
     st.session_state.timer_running = False
-    st.session_state.rest_timer_running = True
+    st.session_state.cooldown_running = True
     st.session_state.set_count += 1  # Increase set count after each stop
 
 # Function to reset everything
 def reset_timer():
     st.session_state.timer_running = False
-    st.session_state.rest_timer_running = False
+    st.session_state.cooldown_running = False
     st.session_state.time_left = 40
-    st.session_state.rest_time_left = 40
+    st.session_state.cooldown_time_left = 20
     st.session_state.set_count = 0  # Reset set count
 
 # Define workout routines
@@ -129,34 +130,44 @@ if st.session_state.timer_running:
     for i in range(st.session_state.time_left, -1, -1):
         st.session_state.time_left = i
         timer_display.write(f"⏳ **Workout Time Left: {i} sec**")  # Update the countdown
+        progress = (i / 40) * 100  # Calculate progress for the green bar
+        st.progress(progress)  # Show shrinking green bar
         time.sleep(1)
     stop_timer()
 
-# Rest Timer Display and Sound Alert
-rest_timer_display = st.empty()
+# Cooldown Timer Display and Red Alert
+cooldown_display = st.empty()
 
-if st.session_state.rest_timer_running:
-    for i in range(st.session_state.rest_time_left, -1, -1):
-        st.session_state.rest_time_left = i
-        rest_timer_display.write(f"🛑 **Rest Time Left: {i} sec**")
+if st.session_state.cooldown_running:
+    for i in range(st.session_state.cooldown_time_left, -1, -1):
+        st.session_state.cooldown_time_left = i
+        
+        # Show red alert if cooldown time exceeds 20 sec
+        if i == 0:
+            cooldown_display.markdown(
+                '<p style="font-size:40px; color:red; font-weight:bold;">🚨 REST TIME OVER! GET BACK TO WORK! 🚨</p>',
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                '<audio autoplay><source src="https://www.soundjay.com/button/beep-07.wav" type="audio/wav"></audio>',
+                unsafe_allow_html=True,
+            )  # Play sound alert when cooldown ends
+
+        cooldown_display.write(f"🛑 **Cooldown Time Left: {i} sec**")
         time.sleep(1)
 
-        # Play an alert sound when rest time reaches 0
-        if i == 0:
-            st.markdown('<audio autoplay><source src="https://www.soundjay.com/button/beep-07.wav" type="audio/wav"></audio>', unsafe_allow_html=True)
-
-    st.session_state.rest_timer_running = False  # Stop the rest timer
+    st.session_state.cooldown_running = False  # Stop the cooldown timer
 
 # Display Final Countdown Values (if timer is stopped)
 if not st.session_state.timer_running:
     timer_display.write(f"⏳ **Workout Time Left: {st.session_state.time_left} sec**")
 
-if not st.session_state.rest_timer_running:
-    rest_timer_display.write(f"🛑 **Rest Time Left: {st.session_state.rest_time_left} sec**")
+if not st.session_state.cooldown_running:
+    cooldown_display.write(f"🛑 **Cooldown Time Left: {st.session_state.cooldown_time_left} sec**")
 
 # Progress Tracking
 st.subheader("Workout Completion")
 for exercise in workouts[day]["Strength"]:
     st.checkbox(f"Completed: {exercise}")
 
-st.success("Workout Tracker Updated! 🎯 Try it out.")
+st.success("🔥 Workout Tracker Updated! Enjoy your training! 💪")
