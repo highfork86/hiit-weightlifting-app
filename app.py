@@ -1,179 +1,86 @@
 import streamlit as st
+import random
 import time
 
-# Initialize session state variables
-if 'timer_running' not in st.session_state:
-    st.session_state.timer_running = False
-    st.session_state.time_left = 40  # Default workout time
-if 'cooldown_running' not in st.session_state:
-    st.session_state.cooldown_running = False
-    st.session_state.cooldown_time_left = 20  # Default cooldown time
-if 'set_count' not in st.session_state:
-    st.session_state.set_count = 0  # Track number of sets completed
+# Initialize session state for scores and level
+if 'score' not in st.session_state:
+    st.session_state.score = 0
+if 'level' not in st.session_state:
+    st.session_state.level = 1
+if 'equation' not in st.session_state:
+    st.session_state.equation = None
+if 'hidden_value' not in st.session_state:
+    st.session_state.hidden_value = None
+if 'choices' not in st.session_state:
+    st.session_state.choices = []
 
-# Function to start the workout timer
-def start_timer():
-    st.session_state.timer_running = True
-    st.session_state.cooldown_running = False  # Stop cooldown when workout starts
-    st.session_state.cooldown_time_left = 20  # Reset cooldown time
+# Function to generate equation
+def generate_equation(level):
+    """Generate an addition or subtraction equation with one missing number."""
+    num1 = random.randint(1, 10 + level * 2)  # Increase difficulty with level
+    num2 = random.randint(1, 10 + level * 2)
+    if random.choice([True, False]):
+        # Addition equation
+        answer = num1 + num2
+        if random.choice([True, False]):
+            equation = f"⬜ + {num2} = {answer}"
+            hidden_value = num1
+        else:
+            equation = f"{num1} + ⬜ = {answer}"
+            hidden_value = num2
+    else:
+        # Subtraction equation
+        answer = num1 - num2 if num1 > num2 else num2 - num1
+        if random.choice([True, False]):
+            equation = f"⬜ - {num2} = {answer}" if num1 > num2 else f"⬜ - {num1} = {answer}"
+            hidden_value = num1 if num1 > num2 else num2
+        else:
+            equation = f"{num1} - ⬜ = {answer}" if num1 > num2 else f"{num2} - ⬜ = {answer}"
+            hidden_value = num2 if num1 > num2 else num1
+    
+    # Generate answer choices
+    choices = [hidden_value, hidden_value + random.randint(1, 3), hidden_value - random.randint(1, 3)]
+    random.shuffle(choices)
 
-# Function to stop the workout timer and start cooldown
-def stop_timer():
-    st.session_state.timer_running = False
-    st.session_state.cooldown_running = True
-    st.session_state.set_count += 1  # Increase set count after each stop
+    return equation, hidden_value, choices
 
-# Function to reset everything
-def reset_timer():
-    st.session_state.timer_running = False
-    st.session_state.cooldown_running = False
-    st.session_state.time_left = 40
-    st.session_state.cooldown_time_left = 20
-    # Keep set count persistent (do not reset)
+# Generate new equation when needed
+if st.session_state.equation is None:
+    st.session_state.equation, st.session_state.hidden_value, st.session_state.choices = generate_equation(st.session_state.level)
 
-# Define workout routines
-workouts = {
-    "Day 1 - Upper Body HIIT & Strength": {
-        "HIIT": [
-            "Jump Rope",
-            "Push-Ups",
-            "Dumbbell Thrusters",
-            "Battle Ropes or Kettlebell Swings",
-            "Burpees",
-            "Mountain Climbers",
-            "Plank-to-Push-Up"
-        ],
-        "Strength": [
-            "Bench Press",
-            "Overhead Shoulder Press",
-            "Incline Dumbbell Press",
-            "Dips",
-            "Triceps Rope Pushdowns",
-            "Hanging Leg Raises"
-        ]
-    },
-    "Day 2 - Lower Body HIIT & Strength": {
-        "HIIT": [
-            "Jump Squats",
-            "Lunges",
-            "Step-Ups",
-            "Kettlebell Swings",
-            "Sprint Intervals",
-            "Sumo Deadlifts",
-            "Plank with Leg Lifts"
-        ],
-        "Strength": [
-            "Squats (Back or Front)",
-            "Romanian Deadlifts",
-            "Bulgarian Split Squats",
-            "Glute Bridges or Hip Thrusts",
-            "Calf Raises",
-            "Ab Rollouts"
-        ]
-    },
-    "Day 3 - Full Body HIIT & Strength": {
-        "HIIT": [
-            "Rowing Machine or Assault Bike",
-            "Kettlebell Snatch",
-            "Burpee Pull-Ups",
-            "Jump Lunges",
-            "Dumbbell Clean & Press",
-            "Box Jumps",
-            "Russian Twists"
-        ],
-        "Strength": [
-            "Deadlifts",
-            "Pull-Ups",
-            "Barbell Rows",
-            "Dumbbell Snatch",
-            "Hammer Curls",
-            "Plank (Hold 60 sec)"
-        ]
-    }
-}
+# UI Design
+st.title("🔢 Math Drop Game")
+st.markdown(f"**Level:** {st.session_state.level} | **Score:** {st.session_state.score}/10")
 
-# Streamlit UI
-st.title("HIIT + Weightlifting Workout App")
+st.write("Find the missing number:")
 
-# Select workout day
-day = st.selectbox("Select your workout day:", list(workouts.keys()))
+# Show equation
+st.markdown(f"### {st.session_state.equation}")
 
-# Display workout routine
-st.subheader("HIIT Workout:")
-for exercise in workouts[day]["HIIT"]:
-    st.write(f"- {exercise}")
+# Simulate falling numbers
+st.write("### Pick the correct number:")
+selected_number = st.radio("", st.session_state.choices, index=None, key="selected_number")
 
-st.subheader("Weightlifting Routine:")
-for exercise in workouts[day]["Strength"]:
-    st.write(f"- {exercise}")
+# Check answer
+if selected_number is not None:
+    if selected_number == st.session_state.hidden_value:
+        st.success("✅ Correct!")
+        st.session_state.score += 1
 
-# Display set count
-st.subheader(f"✅ Sets Completed: {st.session_state.set_count}")
+        # Level up every 10 points
+        if st.session_state.score % 10 == 0:
+            st.session_state.level += 1
+            st.session_state.score = 0  # Reset score for new level
+            st.success(f"🎉 Level Up! You are now on Level {st.session_state.level}")
 
-# HIIT Timer Controls
-st.subheader("HIIT Timer")
-col1, col2, col3 = st.columns(3)
-with col1:
-    if st.button("Start"):
-        start_timer()
-with col2:
-    if st.button("Stop"):
-        stop_timer()
-with col3:
-    if st.button("Reset"):
-        reset_timer()
+        # Generate new equation
+        st.session_state.equation, st.session_state.hidden_value, st.session_state.choices = generate_equation(st.session_state.level)
+    else:
+        st.error("❌ Wrong! Try Again.")
 
-# Live Countdown Timer Display and Progress Bar
-timer_display = st.empty()
-progress_bar = st.progress(1.0)  # Initialize at full green (100%)
-
-if st.session_state.timer_running:
-    for i in range(st.session_state.time_left, -1, -1):
-        st.session_state.time_left = i
-        timer_display.write(f"⏳ **Workout Time Left: {i} sec**")  # Update countdown
-        
-        # ✅ FIX: Ensure only one progress bar updates
-        progress = max(0.0, min(i / 40, 1.0))
-        progress_bar.progress(progress)  # Shrinking green bar
-        
-        time.sleep(1)
-    stop_timer()
-else:
-    progress_bar.progress(0)  # Clear progress bar when timer stops
-
-# Cooldown Timer Display and Red Alert
-cooldown_display = st.empty()
-
-if st.session_state.cooldown_running:
-    for i in range(st.session_state.cooldown_time_left, -1, -1):
-        st.session_state.cooldown_time_left = i
-        
-        # Show red alert if cooldown time exceeds 20 sec
-        if i == 0:
-            cooldown_display.markdown(
-                '<p style="font-size:40px; color:red; font-weight:bold;">🚨 REST TIME OVER! GET BACK TO WORK! 🚨</p>',
-                unsafe_allow_html=True,
-            )
-            st.markdown(
-                '<audio autoplay><source src="https://www.soundjay.com/button/beep-07.wav" type="audio/wav"></audio>',
-                unsafe_allow_html=True,
-            )  # Play sound alert when cooldown ends
-
-        cooldown_display.write(f"🛑 **Cooldown Time Left: {i} sec**")
-        time.sleep(1)
-
-    st.session_state.cooldown_running = False  # Stop the cooldown timer
-
-# Display Final Countdown Values (if timer is stopped)
-if not st.session_state.timer_running:
-    timer_display.write(f"⏳ **Workout Time Left: {st.session_state.time_left} sec**")
-
-if not st.session_state.cooldown_running:
-    cooldown_display.write(f"🛑 **Cooldown Time Left: {st.session_state.cooldown_time_left} sec**")
-
-# Progress Tracking
-st.subheader("Workout Completion")
-for exercise in workouts[day]["Strength"]:
-    st.checkbox(f"Completed: {exercise}")
-
-st.success("🔥 Workout Tracker Updated! Enjoy your training! 💪")
+# Restart button
+if st.button("Restart Game"):
+    st.session_state.score = 0
+    st.session_state.level = 1
+    st.session_state.equation, st.session_state.hidden_value, st.session_state.choices = generate_equation(st.session_state.level)
+    st.experimental_rerun()
